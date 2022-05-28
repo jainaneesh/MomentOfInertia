@@ -3,6 +3,7 @@
 # Last updated            : May 24, 2022
 # Last updated            : May 25, 2022
 # Last updated            : May 26, 2022
+# Last updated            : May 27, 2022
 # Origin is assumed for the calculation as x=y=z=0
 
 
@@ -12,18 +13,32 @@ import matplotlib.pyplot as plt
 import math
 import numpy as np
 
-def area(x,y,sh,response):
+def area(x,y,sh):
     if (sh==1):        
         # Upper and lower limits of x integral
-            xlower=x[0]
-            xupper=x[1]
+        xlower=x[0]
+        xupper=x[1]
         # Upper and lower limits of y integral
-            ylower=y[1]
-            yupper=y[2]
+        ylower=y[1]
+        yupper=y[2]
         #  Function for calculating area
-            farea=lambda yarea, xarea: 1
-            areares,err=integrate.dblquad(farea,xlower,xupper,lambda yarea:ylower,lambda yarea:yupper)
-            return areares
+        farea=lambda yarea, xarea: 1
+        areares,err=integrate.dblquad(farea,xlower,xupper,lambda yarea:ylower,lambda yarea:yupper)
+        return areares
+
+    elif (sh==2):
+        # Upper and lower limits of radius
+        r1=x[0]
+        r2=x[1]
+        # Upper and lower limits of theta
+        theta1=y[0]
+        theta2=y[1]
+        # Function for calculating area
+        farea=lambda theta,rint:1*rint
+        areares,err=integrate.dblquad(farea,r1,r2,lambda theta:theta1,lambda theta:theta2)
+        return areares
+
+
 
 def convertunits(unitsin,unitsout):
     if (sh==1 or sh==2):
@@ -71,8 +86,7 @@ def convertunits(unitsin,unitsout):
             elif (unitsout==3):
                 return pow(2.54/100,4)
             elif (unitsout==4):
-                out=pow((100/2.54),4)
-                return out
+                return 1 
 
 
 
@@ -91,10 +105,21 @@ def rectangle2D(x,y,offx,offy,sh,response,unitsin,unitsout):
     resxx, errxx = integrate.quad(fxx,-dxx/2,dxx/2)
     resyy, erryy = integrate.quad(fyy,-byy/2,byy/2)
     # Hence, moment of inertia is
-    Ixx=(bxx*resxx+(pow(offy,2))*area(x,y,sh,response))*convertunits(unitsin,unitsout)
-    Iyy=(dyy*resyy+(pow(offx,2))*area(x,y,sh,response))*convertunits(unitsin,unitsout)
+    Ixx=(bxx*resxx+(pow(offy,2))*area(x,y,sh))*convertunits(unitsin,unitsout)
+    Iyy=(dyy*resyy+(pow(offx,2))*area(x,y,sh))*convertunits(unitsin,unitsout)
     Izz=Ixx+Iyy
     return Ixx, Iyy, Izz
+
+def circle2D(r1,r2,theta1,theta2,offx,offy,sh,unitsin,unitsout):
+    fzz = lambda theta, rint: 1*rint**3
+    reszz, errzz = integrate.dblquad(fzz,r1,r2,lambda theta:theta1,lambda theta:theta2)
+    x=[r1,r2]
+    y=[theta1,theta2]
+    Ixx=((reszz/2)+(pow(offy,2))*area(x,y,sh))*convertunits(unitsin,unitsout)
+    Iyy=((reszz/2)+(pow(offx,2))*area(x,y,sh))*convertunits(unitsin,unitsout)
+    Izz=Ixx+Iyy
+    return Ixx,Iyy,Izz
+    
 
 choice=1
 print("\n\n")
@@ -190,10 +215,42 @@ if (choice==1):
                 print("More calculations?")
                 print("1) Yes")
                 print("2) No")
-    choice=int(input("Enter your choice: "))
+                choice=int(input("Enter your choice: "))
 
 
-    # elif (sh==2):
+    elif (sh==2):
+        print("Enter circle parameters: ")
+        print("Enter radius:")
+        r1=float(input("R1: "))
+        r2=float(input("R2: "))
+        while (r1>r2):
+            print("Error! R1 should be less than R2")
+            print("Enter radius:")
+            r1=float(input("R1: "))
+            r2=float(input("R2: "))
+        print("Enter theta values:")
+        theta1=float(input("Theta1: "))
+        theta2=float(input("Theta2: "))
+        while (theta1>theta2):
+            print("Theta1 should be less than theta2")
+            print("Enter theta values:")
+            theta1=float(input("Theta1: "))
+            theta2=float(input("Theta2: "))
+        while (theta2>theta1 and theta2>360):
+            print("Theta2 should be less than 360")
+            theta2=float(input("Theta2: "))        
+        theta1=theta1*(math.pi/180)
+        theta2=theta2*(math.pi/180)
+        if (offset==2):
+            Ixx,Iyy,Izz=circle2D(r1,r2,theta1,theta2,0,0,sh,unitsin,unitsout)
+            print(Ixx,Iyy,Izz)
+        elif (offset==1):
+            offsetx=float(input("Offset X by: "))
+            offsety=float(input("Offset Y by: "))  
+            Ixx,Iyy,Izz=circle2D(r1,r2,theta1,theta2,offsetx,offsety,sh,unitsin,unitsout)
+            print(Ixx,Iyy,Izz)  
+
+
 
         
         
