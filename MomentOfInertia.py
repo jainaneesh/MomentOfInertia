@@ -26,7 +26,7 @@ def area(x,y,sh):
         areares,err=integrate.dblquad(farea,xlower,xupper,lambda yarea:ylower,lambda yarea:yupper)
         return areares
 
-    elif (sh==2):
+    elif (sh==2 or sh==3):
         # Upper and lower limits of radius
         r1=x[0]
         r2=x[1]
@@ -110,15 +110,35 @@ def rectangle2D(x,y,offx,offy,sh,response,unitsin,unitsout):
     Izz=Ixx+Iyy
     return Ixx, Iyy, Izz
 
-def circle2D(r1,r2,theta1,theta2,offx,offy,sh,unitsin,unitsout):
+def centroidcircle(r2):
+    fcentroid = lambda xcent,rcent:rcent**2-xcent**2
+    fcentres, err = integrate.quad(fcentroid,lambda xcent:-r2,lambda xcent:r2)
+    return 0.5*fcentres
+
+def circle2D(r2,theta1,theta2,offx,offy,sh,unitsin,unitsout):    
     fzz = lambda theta, rint: 1*rint**3
-    reszz, errzz = integrate.dblquad(fzz,r1,r2,lambda theta:theta1,lambda theta:theta2)
-    x=[r1,r2]
+    reszz, errzz = integrate.dblquad(fzz,0,r2,lambda theta:theta1,lambda theta:theta2)
+    x=[0,r2]
     y=[theta1,theta2]
     Ixx=((reszz/2)+(pow(offy,2))*area(x,y,sh))*convertunits(unitsin,unitsout)
     Iyy=((reszz/2)+(pow(offx,2))*area(x,y,sh))*convertunits(unitsin,unitsout)
     Izz=Ixx+Iyy
     return Ixx,Iyy,Izz
+    
+def semicircle2D(r2,theta1,theta2,offx,offy,sh,unitsin,unitsout):
+    if (theta1==0 and theta2==180):
+        # x=[0,r2]
+        # y=[theta1,theta2]
+        fzz = lambda theta, rint: 1*rint**3
+        reszz, errzz = integrate.dblquad(fzz,0,r2,lambda theta:theta1,lambda theta:theta2)
+        Ixx=(reszz/2)
+        Iyy=(reszz/2)
+        Izz=Ixx+Iyy
+        Icmxx=Ixx-(pow(centroidcircle(r2)/area([0,r2],[theta1,theta2],sh),2))*area([0,r2],[theta1,theta2],sh)
+        Icmyy=Iyy
+        print(Icmxx,Icmyy,Izz)
+        return Icmxx,Icmyy,Izz
+
     
 
 choice=1
@@ -128,7 +148,8 @@ print("-------------------------------------------------------------")
 if (choice==1):
     print("What shape?:")
     print("1) Rectangle")
-    print("2) Circle\n")
+    print("2) Circle")
+    print("3) Semicircle\n")
     sh = int(input("Enter: "))
     print("-------------------------------------------------------------")
     print("Offset required?:")
@@ -221,12 +242,10 @@ if (choice==1):
     elif (sh==2):
         print("Enter circle parameters: ")
         print("Enter radius:")
-        r1=float(input("R1: "))
         r2=float(input("R2: "))
-        while (r1>r2):
-            print("Error! R1 should be less than R2")
-            print("Enter radius:")
-            r1=float(input("R1: "))
+        while (r2==0):
+            print("Error! R1 cant be zero")
+            print("Enter radius:")            
             r2=float(input("R2: "))
         print("Enter theta values:")
         theta1=float(input("Theta1: "))
@@ -242,13 +261,44 @@ if (choice==1):
         theta1=theta1*(math.pi/180)
         theta2=theta2*(math.pi/180)
         if (offset==2):
-            Ixx,Iyy,Izz=circle2D(r1,r2,theta1,theta2,0,0,sh,unitsin,unitsout)
+            Ixx,Iyy,Izz=circle2D(r2,theta1,theta2,0,0,sh,unitsin,unitsout)
             print(Ixx,Iyy,Izz)
         elif (offset==1):
             offsetx=float(input("Offset X by: "))
             offsety=float(input("Offset Y by: "))  
-            Ixx,Iyy,Izz=circle2D(r1,r2,theta1,theta2,offsetx,offsety,sh,unitsin,unitsout)
+            Ixx,Iyy,Izz=circle2D(r2,theta1,theta2,offsetx,offsety,sh,unitsin,unitsout)
             print(Ixx,Iyy,Izz)  
+
+    elif (sh==3):
+        print("Enter circle parameters: ")
+        print("Enter radius:")
+        r2=float(input("R2: "))
+        while (r2==0):
+            print("Error! R1 cant be zero")
+            print("Enter radius:")            
+            r2=float(input("R2: "))
+        print("Enter theta values:")
+        theta1=float(input("Theta1: "))
+        theta2=float(input("Theta2: "))
+        while (theta1>theta2):
+            print("Theta1 should be less than theta2")
+            print("Enter theta values:")
+            theta1=float(input("Theta1: "))
+            theta2=float(input("Theta2: "))
+        while (theta2>theta1 and theta2>360):
+            print("Theta2 should be less than 360")
+            theta2=float(input("Theta2: "))        
+        theta1=theta1*(math.pi/180)
+        theta2=theta2*(math.pi/180)
+        if (offset==2):
+            Icmxx,Icmyy,Izz=semicircle2D(r2,theta1,theta2,0,0,sh,unitsin,unitsout)
+            print(Icmxx,Icmyy,Izz)
+        elif (offset==1):
+            offsetx=float(input("Offset X by: "))
+            offsety=float(input("Offset Y by: "))  
+            Ixx,Iyy,Izz=semicircle2D(r2,theta1,theta2,offsetx,offsety,sh,unitsin,unitsout)
+            print(Ixx,Iyy,Izz)
+
 
 
 
