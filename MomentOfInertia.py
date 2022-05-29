@@ -9,6 +9,7 @@
 
 from scipy import integrate
 import sympy as smp
+
 import matplotlib.pyplot as plt
 import math
 import numpy as np
@@ -26,7 +27,7 @@ def area(x,y,sh):
         areares,err=integrate.dblquad(farea,xlower,xupper,lambda yarea:ylower,lambda yarea:yupper)
         return areares
 
-    elif (sh==2 or sh==3):
+    elif (sh==2):
         # Upper and lower limits of radius
         r1=x[0]
         r2=x[1]
@@ -36,7 +37,19 @@ def area(x,y,sh):
         # Function for calculating area
         farea=lambda theta,rint:1*rint
         areares,err=integrate.dblquad(farea,r1,r2,lambda theta:theta1,lambda theta:theta2)
+        # print(areares)
         return areares
+
+    elif (sh==3):
+        r1=x[0]
+        r2=x[1]
+        # Upper and lower limits of theta
+        theta1=y[0]
+        theta2=y[1]
+        # Function for calculating area
+        farea=lambda theta,rint:1*rint
+        areares,err=integrate.dblquad(farea,r1,r2,lambda theta:theta1,lambda theta:theta2)
+        return 2*areares
 
 
 
@@ -111,8 +124,12 @@ def rectangle2D(x,y,offx,offy,sh,response,unitsin,unitsout):
     return Ixx, Iyy, Izz
 
 def centroidcircle(r2):
-    fcentroid = lambda xcent,rcent:rcent**2-xcent**2
-    fcentres, err = integrate.quad(fcentroid,lambda xcent:-r2,lambda xcent:r2)
+    xcent = smp.Symbol('xcent')
+    rcent = smp.Symbol('rcent')
+    fsym = rcent**2-xcent**2
+    fsub = fsym.subs(rcent,r2)
+    fcentroid = smp.lambdify((xcent),fsub)
+    fcentres, err = integrate.quad(fcentroid,-r2,r2)
     return 0.5*fcentres
 
 def circle2D(r2,theta1,theta2,offx,offy,sh,unitsin,unitsout):    
@@ -127,16 +144,17 @@ def circle2D(r2,theta1,theta2,offx,offy,sh,unitsin,unitsout):
     
 def semicircle2D(r2,theta1,theta2,offx,offy,sh,unitsin,unitsout):
     if (theta1==0 and theta2==180):
-        # x=[0,r2]
-        # y=[theta1,theta2]
+        theta1=theta1*(math.pi/180)
+        theta2=theta2*(math.pi/180)
+        x=[0,r2]
+        y=[theta1,theta2/2]
         fzz = lambda theta, rint: 1*rint**3
         reszz, errzz = integrate.dblquad(fzz,0,r2,lambda theta:theta1,lambda theta:theta2)
         Ixx=(reszz/2)
         Iyy=(reszz/2)
-        Izz=Ixx+Iyy
-        Icmxx=Ixx-(pow(centroidcircle(r2)/area([0,r2],[theta1,theta2],sh),2))*area([0,r2],[theta1,theta2],sh)
+        Izz=reszz
+        Icmxx=Ixx-(pow((centroidcircle(r2)/area(x,y,sh)),2))*area(x,y,sh)
         Icmyy=Iyy
-        print(Icmxx,Icmyy,Izz)
         return Icmxx,Icmyy,Izz
 
     
@@ -285,11 +303,10 @@ if (choice==1):
             print("Enter theta values:")
             theta1=float(input("Theta1: "))
             theta2=float(input("Theta2: "))
-        while (theta2>theta1 and theta2>360):
-            print("Theta2 should be less than 360")
+        while (theta2>theta1 and theta2>180):
+            print("Theta2 should be less than 180")
             theta2=float(input("Theta2: "))        
-        theta1=theta1*(math.pi/180)
-        theta2=theta2*(math.pi/180)
+        
         if (offset==2):
             Icmxx,Icmyy,Izz=semicircle2D(r2,theta1,theta2,0,0,sh,unitsin,unitsout)
             print(Icmxx,Icmyy,Izz)
